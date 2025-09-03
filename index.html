@@ -3,6 +3,185 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Fitness Coach — Input Form</title>
+  <style>
+    :root{--bg:#f7fafc;--card:#ffffff;--accent:#0f766e}
+    body{font-family:Inter, system-ui, Arial, sans-serif;background:var(--bg);margin:0;padding:24px;color:#0f172a}
+    .container{max-width:920px;margin:0 auto}
+    .card{background:var(--card);border-radius:12px;box-shadow:0 6px 22px rgba(2,6,23,0.06);padding:20px}
+    h1{margin:0 0 8px;font-size:20px}
+    label{display:block;margin:12px 0 6px;font-weight:600;font-size:13px}
+    input,select,textarea{width:100%;padding:10px;border-radius:8px;border:1px solid #e6edf0;font-size:14px}
+    .row{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+    .actions{display:flex;gap:8px;align-items:center;margin-top:14px}
+    button{background:var(--accent);color:white;padding:10px 14px;border-radius:10px;border:0;cursor:pointer}
+    .secondary{background:transparent;color:var(--accent);border:1px solid var(--accent)}
+    pre{background:#0b1220;color:#e6f3f2;padding:12px;border-radius:8px;overflow:auto}
+    .small{font-size:13px;color:#334155}
+    .footer{margin-top:14px;font-size:13px;color:#475569}
+    @media (max-width:720px){.row{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <h1>Fitness Coach — User Input Form</h1>
+      <p class="small">Fill these details so the agent can generate a personalized fitness plan.</p>
+
+      <form id="fitnessForm">
+        <label for="goal">Goal</label>
+        <select id="goal" required>
+          <option value="">-- select goal --</option>
+          <option value="weight_loss">Weight loss</option>
+          <option value="muscle_gain">Muscle gain</option>
+          <option value="maintain">Maintain fitness</option>
+        </select>
+
+        <div class="row">
+          <div>
+            <label for="weight">Weight (kg)</label>
+            <input id="weight" type="number" min="20" max="300" required />
+          </div>
+          <div>
+            <label for="height">Height (cm)</label>
+            <input id="height" type="number" min="50" max="300" required />
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label for="age">Age</label>
+            <input id="age" type="number" min="8" max="120" required />
+          </div>
+          <div>
+            <label for="gender">Gender</label>
+            <select id="gender" required>
+              <option value="">-- select --</option>
+              <option>Male</option>
+              <option>Female</option>
+              <option>Other</option>
+            </select>
+          </div>
+        </div>
+
+        <label for="diet">Diet Preference</label>
+        <select id="diet" required>
+          <option value="">-- select diet --</option>
+          <option value="veg">Vegetarian</option>
+          <option value="nonveg">Non-vegetarian</option>
+          <option value="vegan">Vegan</option>
+        </select>
+
+        <label for="equipment">Available Equipment / Place</label>
+        <select id="equipment" required>
+          <option value="">-- select --</option>
+          <option value="no_equipment">No equipment (home)</option>
+          <option value="basic_equipment">Basic (dumbbells / bands)</option>
+          <option value="gym">Gym access</option>
+        </select>
+
+        <label for="level">Fitness Level</label>
+        <select id="level" required>
+          <option value="">-- select level --</option>
+          <option value="beginner">Beginner</option>
+          <option value="intermediate">Intermediate</option>
+          <option value="advanced">Advanced</option>
+        </select>
+
+        <label for="days">Plan Length (days)</label>
+        <input id="days" type="number" min="1" max="90" value="7" required />
+
+        <label for="notes">Additional Notes (injuries, allergies, preferences)</label>
+        <textarea id="notes" rows="3" placeholder="E.g., no squats for knee pain, lactose intolerant..."></textarea>
+
+        <div class="actions">
+          <button type="submit">Generate Prompt</button>
+          <button type="button" class="secondary" id="sendBtn">Send to Flowise</button>
+          <button type="button" class="secondary" id="clearBtn">Clear</button>
+        </div>
+
+      </form>
+
+      <div style="margin-top:18px">
+        <div class="small">Generated Prompt (copy to your Flowise Prompt Template or send via API)</div>
+        <pre id="promptPreview">(Prompt will appear here after you click "Generate Prompt")</pre>
+
+        <div class="footer">Tip: Edit the endpoint in the JavaScript below to point to your Flowise webhook or API. Replace <code>YOUR_FLOWISE_URL</code> and <code>YOUR_API_KEY</code> before sending.</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById('fitnessForm');
+    const preview = document.getElementById('promptPreview');
+    const sendBtn = document.getElementById('sendBtn');
+    const clearBtn = document.getElementById('clearBtn');
+
+    function buildPrompt(data){
+      return `You are a professional Fitness Coach AI.\n\nUser details:\n- Goal: ${data.goal}\n- Weight: ${data.weight} kg\n- Height: ${data.height} cm\n- Age: ${data.age}\n- Gender: ${data.gender}\n- Diet: ${data.diet}\n- Equipment: ${data.equipment}\n- Fitness level: ${data.level}\n- Plan length (days): ${data.days}\n- Additional notes: ${data.notes || 'None'}\n\nRules:\n1. Ask any follow-up questions if needed.\n2. Provide a day-wise plan for the requested number of days. For each day, give Workout, Diet (breakfast, lunch, dinner, snacks), and one Motivational tip.\n3. Keep exercises safe for beginners and provide alternatives for limited equipment.\n4. If user mentions injury or allergy, provide safe alternatives.\n5. Keep responses short and structured like:\n\n📅 Day N Plan\n🏋️ Workout:\n- ...\n🥗 Diet:\n- Breakfast: ...\n- Lunch: ...\n- Dinner: ...\n💡 Motivation Tip: ...\n\nEnd.`;
+    }
+
+    form.addEventListener('submit', (e)=>{
+      e.preventDefault();
+      const data = {
+        goal: document.getElementById('goal').value,
+        weight: document.getElementById('weight').value,
+        height: document.getElementById('height').value,
+        age: document.getElementById('age').value,
+        gender: document.getElementById('gender').value,
+        diet: document.getElementById('diet').value,
+        equipment: document.getElementById('equipment').value,
+        level: document.getElementById('level').value,
+        days: document.getElementById('days').value,
+        notes: document.getElementById('notes').value
+      };
+
+      const prompt = buildPrompt(data);
+      preview.textContent = prompt;
+
+    });
+
+    clearBtn.addEventListener('click', ()=>{
+      form.reset();
+      preview.textContent = '(Prompt will appear here after you click "Generate Prompt")';
+    });
+
+    sendBtn.addEventListener('click', async ()=>{
+      // Use the current preview text as body for Flowise. Edit endpoint & headers below.
+      const promptText = preview.textContent;
+      if(!promptText || promptText.includes('(Prompt will')){alert('Generate the prompt first by clicking "Generate Prompt"');return}
+
+      // ---- EDIT THESE BEFORE USE ----
+      const FLOWISE_URL = 'https://YOUR_FLOWISE_ENDPOINT/api/v1/agent/run'; // example
+      const API_KEY = "https://cloud.flowiseai.com/api/v1/prediction/74ebe48e-6a5f-4b02-ac51-e49d80042f82";
+      // -------------------------------
+
+      const payload = {
+        // adjust according to your Flowise / LLM endpoint schema
+        prompt: promptText,
+        // optional: you can add user id or conversation memory keys here
+      };
+
+      try{
+        const res = await fetch(FLOWISE_URL,{
+          method: 'POST',
+          headers:{
+            'Content-Type':'application/json',
+            'Authorization': `Bearer ${"https://cloud.flowiseai.com/api/v1/prediction/74ebe48e-6a5f-4b02-ac51-e49d80042f82"}`
+          },
+          body: JSON.stringify(payload)
+        });
+
+        if(!res.ok) throw new Error('Network response was not ok: '+res.status);
+        const json = await res.json();
+        alert('Sent to Flowise. Check your agent response in Flowise or console.');
+        console.log('Flowise response:', json);
+      }catch(err){
+        alert('Failed to send to Flowise — open console for error.');
+        console.error(err);
+      }
+    });
+  </script>
   <flowise-fullchatbot></flowise-fullchatbot>
 <script type="module">
     import Chatbot from "https://cdn.jsdelivr.net/npm/flowise-embed/dist/web.js"
@@ -15,3 +194,25 @@
 </body>
 </html>
 
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <flowise-fullchatbot></flowise-fullchatbot>
+<script type="module">
+    import Chatbot from "https://cdn.jsdelivr.net/npm/flowise-embed/dist/web.js"
+    Chatbot.initFull({
+        chatflowid: "74ebe48e-6a5f-4b02-ac51-e49d80042f82",
+        apiHost: "https://cloud.flowiseai.com",
+    })
+</script>
+<script type="module">
+    import Chatbot from "https://cdn.jsdelivr.net/npm/flowise-embed/dist/web.js"
+    Chatbot.init({
+        chatflowid: "5fb0d942-4763-4397-a012-a9f8d6170e89",
+        apiHost: "https://cloud.flowiseai.com",
+    })
+</script>
+</body>
+</html>
