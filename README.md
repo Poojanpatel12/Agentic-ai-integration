@@ -7,7 +7,7 @@ It provides a simple, lightweight setup where you can embed an AI-powered assist
 
 🚀 Live Demo
 
-Local Run: http://127.0.0.1:5501/index.html
+(Live demo)[http://127.0.0.1:5501/index.html]
 
 GitHub Repo: Agentic-ai-integration
 
